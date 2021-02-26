@@ -33,13 +33,18 @@ public class MainActivity extends AppCompatActivity {
         init();
 
         btnOn.setOnClickListener(v -> {
-            // API 29-től az alkalmazások nem kapcsolgathatják a wifit.
+            // Android 10-től (API 29) az alkalmazások nem kapcsolgathatják a wifit.
+            // Éppen ezért meg kell vizsgálnunk a telepített Android verzióját.
+            // Ha ez újabb akkor mást kell csinálnunk.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
                 textInfo.setText("Nincs jogosultság a wifi állapot módosítására");
-                Intent panelIntent = new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
+                // Megnyitunk 1 beállítási panelt
+                Intent panelIntent = new Intent(Settings.Panel.ACTION_WIFI);
+                // Panel bezárásakor szerentnénk valamit csinálni
                 startActivityForResult(panelIntent, 0);
                 return;
             }
+            // Szükséges engedély: CHANGE_WIFI_STATE
             wifiManager.setWifiEnabled(true);
             textInfo.setText("Wifi bekapcsolva");
         });
@@ -47,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         btnOff.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
                 textInfo.setText("Nincs jogosultság a wifi állapot módosítására");
+                // Másik panelen is megtalálható a wifi kapcsolásához szükséges gomb.
                 Intent panelIntent = new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
                 startActivityForResult(panelIntent, 0);
                 return;
@@ -58,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         btnInfo.setOnClickListener(v -> {
             ConnectivityManager conManager =
                     (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+            // Szükséges engedély: ACCESS_NETWORK_STATE
             NetworkInfo netInfo = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
             if (netInfo.isConnected()){
                 int ip_number = wifiInfo.getIpAddress();
@@ -70,9 +77,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // Akkor fog meghívódni amikor bezárjuk a megnyitott panelt.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        // A requestCode az az érték amit mi adunk paraméterül startActivityForResult függvénynek.
         if (requestCode == 0){
             if (wifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED
                 || wifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING
@@ -93,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         textInfo = findViewById(R.id.text_info);
 
         wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        // Szükséges engedély: ACCESS_WIFI_STATE
         wifiInfo = wifiManager.getConnectionInfo();
     }
 }
